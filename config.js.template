@@ -1,0 +1,7 @@
+export default [
+    {
+        spreadsheetId: '',
+        sheetName: '', 
+        twitchChannel: '',
+    },
+]

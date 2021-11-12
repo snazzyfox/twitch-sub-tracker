@@ -1,0 +1,20 @@
+name: deploy
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: gcp-dingo-den-bots
+    steps:
+      - uses: actions/checkout@v2
+      - uses: up9cloud/action-rsync@v1.3
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USERNAME }}
+          KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
+          TARGET: twitch-sub-tracker/
+          ARGS_MORE: --exclude='/.env' --exclude='/config.js'
+          POST_SCRIPT: scripts/restart-twitch-sub-tracker.sh

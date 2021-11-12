@@ -1,0 +1,25 @@
+{
+  "name": "twitch-sub-tracker",
+  "version": "0.1.0",
+  "description": "Tracks twitch subs and sends them to a google sheet.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/snazzyfox/twitch-sub-tracker.git"
+  },
+  "author": "SnazzyFox",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/snazzyfox/twitch-sub-tracker/issues"
+  },
+  "homepage": "https://github.com/snazzyfox/twitch-sub-tracker#readme",
+  "dependencies": {
+    "comfy.js": "^1.1.12",
+    "dotenv": "^10.0.0",
+    "googleapis": "^91.0.0"
+  }
+}
