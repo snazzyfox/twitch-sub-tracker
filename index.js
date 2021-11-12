@@ -12,12 +12,12 @@ const auth = new google.auth.GoogleAuth({
 const sheets = google.sheets({version: 'v4', auth});
 const channels = Object.create(null);
 config.forEach(({spreadsheetId, sheetName, twitchChannel}) => {
-    channels[twitchChannel] = {spreadsheetId, sheetName}
+    channels[twitchChannel.toLowerCase()] = {spreadsheetId, sheetName}
 })
 
 async function appendRow(channel, action, tier, subcount, from, to, months, message) {
     try {
-        const {spreadsheetId, sheetName} = channels[channel];
+        const {spreadsheetId, sheetName} = channels[channel.toLowerCase()];
         const tierName = tier ? tier.prime ? 'Prime' : 'Tier ' + tier.plan / 1000 : null
         const response = (await sheets.spreadsheets.values.append({
             spreadsheetId, range: sheetName, valueInputOption: 'RAW', 
