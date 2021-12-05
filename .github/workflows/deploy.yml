@@ -16,5 +16,5 @@ jobs:
           USER: ${{ secrets.DEPLOY_USERNAME }}
           KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
           TARGET: twitch-sub-tracker/
-          ARGS_MORE: --exclude='/.env' --exclude='/config.js'
+          ARGS_MORE: --exclude='/.env' --exclude='/config.js' --exclude='/.credentials.json'
           POST_SCRIPT: scripts/restart-twitch-sub-tracker.sh
