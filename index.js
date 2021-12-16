@@ -17,21 +17,46 @@ config.forEach(({ spreadsheetId, sheetName, twitchChannel }) => {
     channels[twitchChannel.toLowerCase()] = { spreadsheetId, sheetName }
 })
 
-async function writeRow(channel, action, tier, subcount, from, to, months, message, range) {
+function getTierName(subTierData) {
+    if (subTierData) {
+        return subTierData.prime ? 'Prime' : 'Tier ' + subTierData.plan / 1000;
+    } else {
+        return null;
+    }
+}
+
+let lastGSheetApiCallTime = 0;
+
+async function writeRow(subData) {
+    console.log(JSON.stringify(subData))
+    while (Date.now() - lastGSheetApiCallTime < 1000) {  // delay processing until at least 1 sec past last call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    lastGSheetApiCallTime = Date.now();
     try {
-        const { spreadsheetId, sheetName } = channels[channel.toLowerCase()];
-        const tierName = tier ? tier.prime ? 'Prime' : 'Tier ' + tier.plan / 1000 : null
-        const resource = { values: [[(new Date()).toISOString(), channel, action, tierName, subcount, from, to, months, message || '']] }
-        if (range) {
+        const { spreadsheetId, sheetName } = channels[subData.channel.toLowerCase()];
+        const tierName = getTierName(subData.tier)
+        const row = [
+            (new Date()).toISOString(),
+            subData.channel,
+            subData.action,
+            getTierName(subData.tier),
+            subData.count,
+            subData.from,
+            subData.to,
+            subData.months,
+            subData.message || '',
+        ]
+        const resource = { values: [row] };
+        if (subData.range) {
             const response = (await sheets.spreadsheets.values.update({
-                spreadsheetId, range, valueInputOption: 'RAW', resource,
+                spreadsheetId, range: subData.range, valueInputOption: 'RAW', resource,
             })).data;
-            return response.updatedRange;
         } else {
             const response = (await sheets.spreadsheets.values.append({
                 spreadsheetId, range: sheetName, valueInputOption: 'RAW', resource,
             })).data;
-            return response.updates.updatedRange;
+            subData.range = response.updates.updatedRange;  // this also updates the cache since it's by ref
         }
     } catch (err) {
         console.error(err);
@@ -39,30 +64,67 @@ async function writeRow(channel, action, tier, subcount, from, to, months, messa
 }
 
 ComfyJS.onSub = (user, message, subTierInfo, extra) => {
-    writeRow(extra.channel, 'Sub', subTierInfo, 1, user, user, 1, message);
+    writeRow({
+        channel: extra.channel,
+        action: 'Sub',
+        tier: subTierInfo,
+        count: 1,
+        from: user,
+        to: user,
+        months: 1,
+        message,
+    });
 }
 
 ComfyJS.onResub = (user, message, streamMonths, cumulativeMonths, subTierInfo, extra) => {
-    writeRow(extra.channel, 'Resub', subTierInfo, 1, user, user, cumulativeMonths, message);
+    writeRow({
+        channel: extra.channel,
+        action: 'Resub',
+        tier: subTierInfo,
+        count: 1,
+        from: user,
+        to: user,
+        months: cumulativeMonths,
+        message,
+    });
+}
+
+ComfyJS.onGiftSubContinue = (user, sender, extra) => {
+    writeRow({
+        channel: extra.channel,
+        action: 'Gift Continue',
+        tier: null,
+        count: null,
+        from: sender,
+        to: user,
+        months: null,
+        message: null,
+    });
 }
 
 ComfyJS.onSubGift = async (gifterUser, streakMonths, recipientUser, senderCount, subTierInfo, extra) => {
     const originId = extra.userState['msg-param-origin-id'];
     let subData = cache.get(originId);
     if (subData) {
-        if (subData.recipient) {
-            subData.recipient += ', ' + recipientUser;
+        if (subData.to) {
+            subData.to += ', ' + recipientUser;
         } else {
-            subData.recipient = recipientUser;
+            subData.to = recipientUser;
         }
     } else {
         subData = {
-            channel: extra.channel, type: 'Gift', subTierInfo, count: 1, gifter: gifterUser, recipient: recipientUser
+            channel: extra.channel,
+            action: 'Gift',
+            tier: subTierInfo,
+            count: 1,
+            from: gifterUser,
+            to: recipientUser,
+            months: null,
+            message: null,
         }
     }
-    const rowRange = await writeRow(subData.channel, subData.type, subTierInfo, subData.count, subData.gifter, subData.recipient, null, null, subData.range);
-    subData.range = rowRange;
     cache.set(originId, subData);
+    await writeRow(subData);
 }
 
 ComfyJS.onSubMysteryGift = async (gifterUser, numbOfSubs, senderCount, subTierInfo, extra) => {
@@ -72,16 +134,18 @@ ComfyJS.onSubMysteryGift = async (gifterUser, numbOfSubs, senderCount, subTierIn
         subData.count = extra.userMassGiftCount;
     } else {
         subData = {
-            channel: extra.channel, type: 'Gift', subTierInfo, count: extra.userMassGiftCount, gifter: gifterUser
+            channel: extra.channel,
+            action: 'Gift',
+            tier: subTierInfo,
+            count: extra.userMassGiftCount,
+            from: gifterUser,
+            to: null,
+            months: null,
+            message: null,
         }
     }
-    const rowRange = await writeRow(subData.channel, subData.type, subTierInfo, subData.count, subData.gifter, subData.recipient, null, null, subData.range);
-    subData.range = rowRange;
     cache.set(originId, subData);
-}
-
-ComfyJS.onGiftSubContinue = (user, sender, extra) => {
-    writeRow(extra.channel, 'Gift Continue', null, null, sender, user, null, null, null);
+    await writeRow(subData);
 }
 
 ComfyJS.Init(config[0].twitchChannel, null, Object.keys(channels));
