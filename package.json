@@ -21,6 +21,7 @@
     "comfy.js": "^1.1.12",
     "dotenv": "^10.0.0",
     "googleapis": "^91.0.0",
+    "socket.io-client": "^2.5.0",
     "ttl-cache": "^1.0.2"
   }
 }

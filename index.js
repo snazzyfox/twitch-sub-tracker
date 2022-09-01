@@ -5,6 +5,7 @@ import { google } from 'googleapis';
 import TTLCache from 'ttl-cache';
 import ComfyJS from 'comfy.js';
 import config from './config.js';
+import io from 'socket.io-client';
 
 const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -43,6 +44,7 @@ async function writeRow(rowData) {
             getTierName(rowData.tier),
             rowData.count,
             rowData.bits,
+            rowData.tip,
             rowData.from,
             rowData.to,
             rowData.months,
@@ -150,4 +152,34 @@ ComfyJS.onCheer = ( user, message, bits, flags, extra ) => {
     });
 }
 
+console.log('Initializing Comfy.JS twitch chat connection');
 ComfyJS.Init(config[0].twitchChannel, null, Object.keys(channels));
+
+const sockets = config.map(({ spreadsheetId, sheetName, twitchChannel, streamlabsSocketToken }) => {
+    if (streamlabsSocketToken) {
+        const socket = io(`https://sockets.streamlabs.com?token=${streamlabsSocketToken}`, {transports: ['websocket']});
+        socket.on('connect', () => {
+            console.log(`Connected to streamlabs socket for ${twitchChannel}`);
+        });
+        socket.on('connect_error', error => {
+            console.log(`Error connecting to streamlabs socket: `, error);
+        });
+        socket.on('event', ({type, message}) => {
+            if (type === 'donation') {
+                message.forEach(({isTest, amount, from, message}) => {
+                    writeRow({
+                        channel: twitchChannel,
+                        action: 'Tip',
+                        tip: amount,
+                        from: isTest ? 'Streamlabs Test' : from, 
+                        message,
+                    })
+                })
+            }
+        });
+        socket.connect();
+        return socket;
+    }
+})
+
+console.log('Initiailization finished.');
