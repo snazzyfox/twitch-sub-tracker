@@ -170,7 +170,7 @@ const sockets = config.map(({ spreadsheetId, sheetName, twitchChannel, streamlab
                     writeRow({
                         channel: twitchChannel,
                         action: 'Tip',
-                        tip: amount,
+                        tip: Number(amount),
                         from: isTest ? 'Streamlabs Test' : from, 
                         message,
                     })
