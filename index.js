@@ -152,6 +152,20 @@ ComfyJS.onCheer = ( user, message, bits, flags, extra ) => {
     });
 }
 
+ComfyJS.onChat = (user, message, flags, self, extra ) => {
+    if (user === 'StreamElements') {
+        const match = /^(\w+) just bought me/.exec(message);
+        if (match && match[1]) {
+            writeRow({
+                channel: extra.channel, 
+                action: 'Throne', 
+                from: match[1],
+                message,
+            })
+        }
+    }
+}
+
 console.log('Initializing Comfy.JS twitch chat connection');
 ComfyJS.Init(config[0].twitchChannel, null, Object.keys(channels));
 
