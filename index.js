@@ -9,6 +9,7 @@ import io from 'socket.io-client';
 
 const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    // keyFile: '.credentials.json',
 });
 const cache = new TTLCache({ ttl: 60, interval: 20 });
 
