@@ -169,7 +169,7 @@ ComfyJS.onChat = (user, message, flags, self, extra ) => {
 console.log('Initializing Comfy.JS twitch chat connection');
 ComfyJS.Init(config[0].twitchChannel, null, Object.keys(channels));
 
-const sockets = config.map(({ spreadsheetId, sheetName, twitchChannel, streamlabsSocketToken }) => {
+config.forEach(({ twitchChannel, streamlabsSocketToken, streamelementsJwtToken }) => {
     if (streamlabsSocketToken) {
         const socket = io(`https://sockets.streamlabs.com?token=${streamlabsSocketToken}`, {transports: ['websocket']});
         socket.on('connect', () => {
@@ -192,7 +192,28 @@ const sockets = config.map(({ spreadsheetId, sheetName, twitchChannel, streamlab
             }
         });
         socket.connect();
-        return socket;
+    }
+
+    if (streamelementsJwtToken) {
+        const socket = io('https://realtime.streamelements.com', {transports: ['websocket']});
+        socket.on('connect', () => {
+            socket.emit('authenticate', {method: 'jwt', token: streamelementsJwtToken});
+        });
+        socket.on('authenticated', () => {
+            console.log(`Connected to streamelements socket for ${twitchChannel}`);
+        });
+        socket.on('unauthorized', console.error);
+        socket.on('event', (data) => {
+            if (data.type === 'tip') {
+                writeRow({
+                    channel: twitchChannel,
+                    action: 'Tip', 
+                    tip: data.data.amount,
+                    from: data.isMock ? 'StreamElements Test': data.data.username,
+                    message: data.data.message,
+                })
+            }
+        })
     }
 })
 
