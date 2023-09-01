@@ -20,7 +20,9 @@ config.forEach(({ spreadsheetId, sheetName, twitchChannel }) => {
 })
 
 function getTierName(subTierData) {
-    if (subTierData) {
+    if (typeof subTierData === 'string') {
+        return subTierData
+    } else if (subTierData) {
         return subTierData.prime ? 'Prime' : 'Tier ' + subTierData.plan / 1000;
     } else {
         return null;
