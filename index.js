@@ -166,17 +166,6 @@ ComfyJS.onChat = (user, message, flags, self, extra ) => {
                 message,
             })
         }
-    } else if (extra.userState['pinned-chat-paid-level']) {
-        // hype chat
-        writeRow({
-            channel: extra.channel,
-            action: 'Hype Chat',
-            from: user,
-            message: extra.userState['pinned-chat-paid-currency'] 
-                + extra.userState['pinned-chat-paid-amount'].toString() 
-                + ' ' + message,
-            tier: extra.userState['pinned-chat-paid-level']
-        })
     }
 }
 
