@@ -19,7 +19,7 @@ export default function start() {
         if (type === "donation") {
           message.forEach(
             (msg: { amount: string; isTest: boolean; from: string }) => {
-              writeRow({
+              writeRow(conf.userId, {
                 channel: conf.userName,
                 action: "Tip",
                 amount: Number(msg.amount),
@@ -49,7 +49,7 @@ export default function start() {
       socket.on("unauthorized", console.error);
       socket.on("event", (ev) => {
         if (ev.type === "tip") {
-          writeRow({
+          writeRow(conf.userId, {
             channel: conf.userName,
             action: "Tip",
             amount: ev.data.amount,

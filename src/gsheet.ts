@@ -17,13 +17,13 @@ interface GSheetRow {
   message?: string;
 }
 
-export async function writeRow(data: GSheetRow) {
+export async function writeRow(userId: string, data: GSheetRow) {
   while (Date.now() - lastGSheetApiCallTime < 1000) {
     // delay processing until at least 1 sec past last call
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
   lastGSheetApiCallTime = Date.now();
-  const { spreadsheetId, sheetName } = config.get(data.channel)!;
+  const { spreadsheetId, sheetName } = config.get(userId)!;
   try {
     // get spreadsheet id and name
     const row = [

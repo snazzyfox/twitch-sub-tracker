@@ -38,7 +38,7 @@ export default function start() {
     authProvider.addUser(conf.userId, conf.twitch);
 
     listener.onChannelSubscription(conf.userId, async (event) => {
-      await writeRow({
+      await writeRow(conf.userId, {
         channel: event.broadcasterDisplayName,
         action: "Sub",
         level: event.tier,
@@ -48,7 +48,7 @@ export default function start() {
     });
 
     listener.onChannelSubscriptionMessage(conf.userId, async (event) => {
-      await writeRow({
+      await writeRow(conf.userId, {
         channel: event.broadcasterDisplayName,
         action: "Resub",
         level: event.tier,
@@ -59,7 +59,7 @@ export default function start() {
     });
 
     listener.onChannelSubscriptionGift(conf.userId, async (event) => {
-      await writeRow({
+      await writeRow(conf.userId, {
         channel: event.broadcasterDisplayName,
         action: "Gift",
         level: event.tier,
@@ -69,7 +69,7 @@ export default function start() {
     });
 
     listener.onChannelCheer(conf.userId, async (event) => {
-      await writeRow({
+      await writeRow(conf.userId, {
         channel: event.broadcasterDisplayName,
         action: "Cheer",
         user: event.userDisplayName || "(Anonymous)",
@@ -79,7 +79,7 @@ export default function start() {
     });
 
     listener.onChannelHypeTrainEnd(conf.userId, async (event) => {
-      await writeRow({
+      await writeRow(conf.userId, {
         channel: event.broadcasterDisplayName,
         action: "HypeTrain",
         level: event.level.toString(),
@@ -88,7 +88,7 @@ export default function start() {
 
     listener.onChannelAutomaticRewardRedemptionAdd(conf.userId, async (event) => {
       if (["message_effect", "gigantify_an_emote", "celebration"].includes(event.rewardType))
-        await writeRow({
+        await writeRow(conf.userId, {
           channel: event.broadcasterDisplayName,
           action: "Redeem",
           level: event.rewardType,
