@@ -1,0 +1,16 @@
+[{
+    "userId": "", 
+    "userName": "",
+    "spreadsheetId": "",
+    "sheetName": "",
+    "streamElements": {
+        "jwt": ""
+    },
+    "twitch": {
+        "accessToken": "",
+        "refreshToken": "",
+        "expiresIn": 0,
+        "obtainmentTimestamp": 0,
+        "scope": ["bits:read","channel:read:hype_train","channel:read:redemptions","channel:read:subscriptions","user:read:chat"]
+    }
+}]

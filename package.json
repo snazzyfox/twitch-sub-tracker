@@ -4,7 +4,8 @@
   "description": "Tracks twitch subs and sends them to a google sheet.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "tsx src/index.ts",
+    "build": "tsc"
   },
   "type": "module",
   "repository": {
@@ -18,10 +19,18 @@
   },
   "homepage": "https://github.com/snazzyfox/twitch-sub-tracker#readme",
   "dependencies": {
-    "comfy.js": "^1.1.12",
-    "dotenv": "^10.0.0",
-    "googleapis": "^91.0.0",
-    "socket.io-client": "^2.5.0",
-    "ttl-cache": "^1.0.2"
+    "@twurple/api": "file:lib/@twurple/api.tar",
+    "@twurple/auth": "^7.1.0",
+    "@twurple/eventsub-base": "file:lib/@twurple/eventsub-base.tar",
+    "@twurple/eventsub-ws": "file:lib/@twurple/eventsub-ws.tar",
+    "dotenv": "^16.4.5",
+    "googleapis": "^142.0.0",
+    "socket.io-client": "^4.7.5"
+  },
+  "devDependencies": {
+    "@tsconfig/node-lts": "^20.1.3",
+    "@types/node": "^22.5.0",
+    "tsx": "^4.18.0",
+    "typescript": "^5.5.4"
   }
 }

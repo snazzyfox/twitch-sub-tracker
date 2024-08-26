@@ -1,0 +1,1 @@
+This is here because twurple does not yet support new bit redeems. The feature has been submitted by a PR for twurple has been inactvie. This pulls in the artifact from an external PR and should be removed once merged: https://github.com/twurple/twurple/pull/587
