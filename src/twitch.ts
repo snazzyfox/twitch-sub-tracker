@@ -3,6 +3,15 @@ import { ApiClient } from "@twurple/api";
 import { EventSubWsListener } from "@twurple/eventsub-ws";
 import { config, writeConfig } from "./config.js";
 import { writeRow } from "./gsheet.js";
+import Keyv from "keyv";
+import { KeyvFile } from "keyv-file";
+
+const subCache = new Keyv({
+  // @ts-ignore
+  store: new KeyvFile({ filename: ".cache.json" }),
+  ttl: 28 * 24 * 60 * 60 * 1000, // 28 days
+  namespace: "subscriber",
+});
 
 const authProvider = new RefreshingAuthProvider({
   clientId: process.env.TWITCH_CLIENT_ID!,
@@ -32,13 +41,14 @@ const listener = new EventSubWsListener({
 
 export default function start() {
   listener.start();
-
+  
   config.forEach((conf) => {
-    console.log(`Creating subscriptions for user ${conf.userId}`);
+    console.log(`Creating websocket subscriptions for channel ${conf.userId}`);
     authProvider.addUser(conf.userId, conf.twitch);
 
     listener.onChannelSubscription(conf.userId, async (event) => {
-      await writeRow(conf.userId, {
+      subCache.set(conf.userId, true);
+      const resp = await writeRow(conf.userId, {
         channel: event.broadcasterDisplayName,
         action: "Sub",
         level: event.tier,
@@ -48,14 +58,20 @@ export default function start() {
     });
 
     listener.onChannelSubscriptionMessage(conf.userId, async (event) => {
-      await writeRow(conf.userId, {
-        channel: event.broadcasterDisplayName,
-        action: "Resub",
-        level: event.tier,
-        user: event.userDisplayName,
-        amount: 1,
-        message: event.messageText,
-      });
+      if (await subCache.get(conf.userId)) {
+        console.log(
+          `Ignored subscription.message from ${event.userDisplayName}: subscription was already recorded.`,
+        );
+      } else {
+        await writeRow(conf.userId, {
+          channel: event.broadcasterDisplayName,
+          action: "Resub",
+          level: event.tier,
+          user: event.userDisplayName,
+          amount: 1,
+          message: event.messageText,
+        });
+      }
     });
 
     listener.onChannelSubscriptionGift(conf.userId, async (event) => {

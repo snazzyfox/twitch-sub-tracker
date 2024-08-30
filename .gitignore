@@ -10,7 +10,7 @@ dist
 !.env.template
 
 .credential.json
-
+.cache.json
 config.json
 config.*.json
 !config.template.json

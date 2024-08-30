@@ -25,6 +25,8 @@
     "@twurple/eventsub-ws": "file:lib/@twurple/eventsub-ws.tar",
     "dotenv": "^16.4.5",
     "googleapis": "^142.0.0",
+    "keyv": "^5.0.1",
+    "keyv-file": "^5.0.0",
     "socket.io-client": "^4.7.5"
   },
   "devDependencies": {
