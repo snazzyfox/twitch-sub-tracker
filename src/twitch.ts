@@ -3,15 +3,6 @@ import { ApiClient } from "@twurple/api";
 import { EventSubWsListener } from "@twurple/eventsub-ws";
 import { config, writeConfig } from "./config.js";
 import { writeRow } from "./gsheet.js";
-import Keyv from "keyv";
-import { KeyvFile } from "keyv-file";
-
-const subCache = new Keyv({
-  // @ts-ignore
-  store: new KeyvFile({ filename: ".cache.json" }),
-  ttl: 28 * 24 * 60 * 60 * 1000, // 28 days
-  namespace: "subscriber",
-});
 
 const authProvider = new RefreshingAuthProvider({
   clientId: process.env.TWITCH_CLIENT_ID!,
@@ -46,43 +37,46 @@ export default function start() {
     console.log(`Creating websocket subscriptions for channel ${conf.userId}`);
     authProvider.addUser(conf.userId, conf.twitch);
 
-    listener.onChannelSubscription(conf.userId, async (event) => {
-      subCache.set(conf.userId, true);
-      const resp = await writeRow(conf.userId, {
-        channel: event.broadcasterDisplayName,
-        action: "Sub",
-        level: event.tier,
-        user: event.userDisplayName,
-        amount: 1,
-      });
-    });
-
-    listener.onChannelSubscriptionMessage(conf.userId, async (event) => {
-      if (await subCache.get(conf.userId)) {
-        console.log(
-          `Ignored subscription.message from ${event.userDisplayName}: subscription was already recorded.`,
-        );
-      } else {
+    listener.onChannelChatNotification(conf.userId, conf.userId, async (event) => {
+      if (event.type === 'sub') {
+        // brand new subs only
+        const resp = await writeRow(conf.userId, {
+          channel: event.broadcasterDisplayName,
+          action: "Sub",
+          level: event.tier,
+          user: event.chatterDisplayName,
+          amount: 1,
+        });
+      } else if (event.type === 'resub' && !event.isGift) {
+        // resub message. Gifted sub already counted in gift
         await writeRow(conf.userId, {
           channel: event.broadcasterDisplayName,
           action: "Resub",
           level: event.tier,
-          user: event.userDisplayName,
+          user: event.chatterDisplayName,
           amount: 1,
           message: event.messageText,
         });
+      } else if (event.type === 'sub_gift' && !event.communityGiftId) {
+        // gifted subs to specific targets
+        await writeRow(conf.userId, {
+          channel: event.broadcasterDisplayName,
+          action: "Gift",
+          level: event.tier,
+          user: event.chatterDisplayName,
+          amount: 1,
+        });
+      } else if (event.type === 'community_sub_gift') {
+        // random sub gifts
+        await writeRow(conf.userId, {
+          channel: event.broadcasterDisplayName,
+          action: "Gift",
+          level: event.tier,
+          user: event.chatterDisplayName,
+          amount: event.amount,
+        });
       }
-    });
-
-    listener.onChannelSubscriptionGift(conf.userId, async (event) => {
-      await writeRow(conf.userId, {
-        channel: event.broadcasterDisplayName,
-        action: "Gift",
-        level: event.tier,
-        user: event.gifterDisplayName,
-        amount: event.amount,
-      });
-    });
+    })
 
     listener.onChannelCheer(conf.userId, async (event) => {
       await writeRow(conf.userId, {
