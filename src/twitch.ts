@@ -92,7 +92,7 @@ export default function start() {
       await writeRow(conf.userId, {
         channel: event.broadcasterDisplayName,
         action: "HypeTrain",
-        level: event.level.toString(),
+        level: event.level,
       });
     });
 

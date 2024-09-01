@@ -11,7 +11,7 @@ let lastGSheetApiCallTime = 0;
 interface GSheetRow {
   channel: string;
   action: string;
-  level?: string; // sub tier or hype train level
+  level?: string | number; // sub tier or hype train level
   amount?: number; // sub count, bits count, tip dollars
   user?: string;
   message?: string;
