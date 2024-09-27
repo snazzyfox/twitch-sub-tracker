@@ -5,7 +5,16 @@ const auth = new google.auth.GoogleAuth({
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-const sheets = google.sheets({ version: "v4", auth });
+const sheets = google.sheets({
+  version: "v4",
+  auth,
+  retry: true,
+  retryConfig: {
+    httpMethodsToRetry: ["GET", "PUT", "OPTIONS", "HEAD", "DELETE", "POST"],
+    retry: 5,
+    noResponseRetries: 5,
+  },
+});
 let lastGSheetApiCallTime = 0;
 
 interface GSheetRow {
@@ -35,7 +44,7 @@ export async function writeRow(userId: string, data: GSheetRow) {
       data.user,
       data.message || "",
     ];
-    console.log("Writing row: ", row);
+    // console.log("Writing row: ", row);
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: sheetName,
